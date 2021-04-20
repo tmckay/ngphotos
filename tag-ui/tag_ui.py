@@ -3,7 +3,8 @@ Display images and allow users to add tags to them
 """
 import sys
 
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QFileDialog, QLineEdit, QPushButton
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QFileDialog, QLineEdit, QPushButton, QLabel
+from PyQt6.QtGui import QPixmap
 
 
 class TagUI(QWidget):
@@ -14,15 +15,28 @@ class TagUI(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        self.file_dialog = QFileDialog()
+        title = QLabel('ngphotos :: tags')
+        layout.addWidget(title)
 
-        #layout.addWidget(self.file_dialog)
+        self.instructions = QLabel('Select a directory to start tagging images:')
+        layout.addWidget(self.instructions)
 
         self.line_edit = QLineEdit()
         layout.addWidget(self.line_edit)
 
         button = QPushButton('Browse')
+        button.clicked.connect(self._open_file_dialog)
         layout.addWidget(button)
+
+        label = QLabel()
+        pixmap = QPixmap()
+        pixmap.load('../kauai_waterfall.jpg')
+        label.setPixmap(pixmap)
+        layout.addWidget(label)
+
+    def _open_file_dialog(self):
+        directory = QFileDialog.getExistingDirectory()
+        self.line_edit.setText(directory)
 
 app = QApplication(sys.argv)
 
