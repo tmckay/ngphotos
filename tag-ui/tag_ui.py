@@ -3,10 +3,33 @@ Display images and allow users to add tags to them
 """
 import os
 import pathlib
+import sqlite3
 import sys
 
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QFileDialog, QLineEdit, QPushButton, QLabel, QMainWindow
 from PyQt6.QtGui import QPixmap
+
+
+DB_PATH = os.path.expanduser('~/ngphotos.db')
+
+
+class Backend:
+    
+    def __init__(self, db_path):
+        self.con = sqlite3.connect(db_path)
+        self.cur = self.con.cursor()
+
+    def create_table(self):
+        self.cur.execute('''CREATE TABLE IF NOT EXISTS images
+                            (path text, md5 text)''')
+        self.con.commit()
+
+    def add_image(self, path, md5):
+        self.cur.execute(f'''INSERT INTO images VALUES ('{path}', '{md5}')''')
+        self.con.commit()
+
+    def close(self):
+        self.con.close()
 
 
 class TagUI(QWidget):
@@ -40,7 +63,19 @@ class TagUI(QWidget):
         self.image_label.setPixmap(self.pixmap)
         layout.addWidget(self.image_label)
 
+        tag_instructions = QLabel('Add tags separated by spaces:')
+        layout.addWidget(tag_instructions)
+
+        self.tags = QLineEdit()
+        layout.addWidget(self.tags)
+
         self._set_default_directory()
+
+        self._init_backend()
+        self.backend.create_table()
+
+    def _init_backend(self):
+        self.backend = Backend(DB_PATH)
 
     def _open_file_dialog(self):
         directory = QFileDialog.getExistingDirectory()
@@ -75,8 +110,11 @@ class TagUI(QWidget):
                     # TODO dynamically resize based on resolution
                     self.pixmap = self.pixmap.scaledToWidth(1000)
                     self.image_label.setPixmap(self.pixmap)
+                    self.backend.add_image(full_path, '123abc')
                     break
             break
+
+        self.backend.close()
 
 app = QApplication(sys.argv)
 app.setStyleSheet('''
