@@ -32,10 +32,22 @@ class Backend:
         self.con.close()
 
 
+# TODO make this run in a separate process
+def _image_generator(search_dir, extensions):
+    for dirpath, dirs, files in os.walk(search_dir):
+        for file_ in files:
+            ext = os.path.splitext(file_)[1].lower()
+            if ext in extensions:
+                full_path = os.path.join(dirpath, file_)
+                yield full_path
+
+
 class TagUI(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('ngphoto :: tags')
+
+        self.all_images = None
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -101,20 +113,22 @@ class TagUI(QWidget):
         # TODO allow file extensions to be filterable
         extensions = ['.png', '.jpg', '.jpeg']
 
-        for dirpath, dirs, files in os.walk(search_dir):
-            for file_ in files:
-                ext = os.path.splitext(file_)[1].lower()
-                if ext in extensions:
-                    full_path = os.path.join(dirpath, file_)
-                    self.pixmap.load(full_path)
-                    # TODO dynamically resize based on resolution
-                    self.pixmap = self.pixmap.scaledToWidth(1000)
-                    self.image_label.setPixmap(self.pixmap)
-                    self.backend.add_image(full_path, '123abc')
-                    break
-            break
+        if not self.all_images:
+            self.all_images = list(_image_generator(search_dir, extensions))
+            self.image_idx = 0
 
+        image_path = self.all_images[self.image_idx]
+        self.pixmap.load(image_path)
+        # TODO dynamically resize based on resolution
+        self.pixmap = self.pixmap.scaledToWidth(1000)
+        self.image_label.setPixmap(self.pixmap)
+        self.backend.add_image(image_path, '123abc')
+
+        self.image_idx += 1
+
+    def closeEvent(self, event):
         self.backend.close()
+
 
 app = QApplication(sys.argv)
 app.setStyleSheet('''
