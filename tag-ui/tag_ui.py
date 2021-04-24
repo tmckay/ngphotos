@@ -1,6 +1,8 @@
 """
 Display images and allow users to add tags to them
 """
+import multiprocessing as mp
+from multiprocessing import Process, Queue
 import os
 import pathlib
 import sqlite3
@@ -11,6 +13,32 @@ from PyQt6.QtGui import QPixmap
 
 
 DB_PATH = os.path.expanduser('~/ngphotos.db')
+
+
+class FileScanner:
+    def __init__(self, search_dir, extensions):
+        print('init scanner')
+        self.ctx = mp.get_context('spawn')
+        self.queue = self.ctx.Queue()
+        self.search_dir = search_dir
+        self.extensions = extensions
+
+    @staticmethod
+    def _scan(search_dir, extensions, queue):
+        for dirpath, dirs, files in os.walk(search_dir):
+            for file_ in files:
+                print(f'scanning {file_}')
+                ext = os.path.splitext(file_)[1].lower()
+                if ext in extensions:
+                    full_path = os.path.join(dirpath, file_)
+                    print(f'adding {full_path} to the queue')
+                    queue.put(full_path)
+
+    def start(self):
+        print('start scanner')
+        self.process = self.ctx.Process(target=self._scan, args=(self.search_dir, self.extensions, self.queue,), daemon=True)
+        self.process.start()
+        #self.process.join()
 
 
 class Backend:
@@ -30,16 +58,6 @@ class Backend:
 
     def close(self):
         self.con.close()
-
-
-# TODO make this run in a separate process
-def _image_generator(search_dir, extensions):
-    for dirpath, dirs, files in os.walk(search_dir):
-        for file_ in files:
-            ext = os.path.splitext(file_)[1].lower()
-            if ext in extensions:
-                full_path = os.path.join(dirpath, file_)
-                yield full_path
 
 
 class TagUI(QWidget):
@@ -97,6 +115,7 @@ class TagUI(QWidget):
         self.line_edit.setText(str(pathlib.Path.home()))
 
     def _get_image_files(self):
+        print('start _get_image_files')
         # Clear error messages
         self.error_message.setText('')
 
@@ -114,10 +133,15 @@ class TagUI(QWidget):
         extensions = ['.png', '.jpg', '.jpeg']
 
         if not self.all_images:
-            self.all_images = list(_image_generator(search_dir, extensions))
+            print('before creating scanner')
+            scanner = FileScanner(search_dir, extensions)
+            scanner.start()
+            print('after creating scanner')
+            self.all_images = scanner.queue
             self.image_idx = 0
 
-        image_path = self.all_images[self.image_idx]
+        #image_path = self.all_images[self.image_idx]
+        image_path = self.all_images.get()
         self.pixmap.load(image_path)
         # TODO dynamically resize based on resolution
         self.pixmap = self.pixmap.scaledToWidth(1000)
@@ -130,18 +154,19 @@ class TagUI(QWidget):
         self.backend.close()
 
 
-app = QApplication(sys.argv)
-app.setStyleSheet('''
-    QWidget {
-        font-size: 20px;
-    }
-    QLineEdit {
-        font-size: 20px;
-        padding: 2px; 
-    }
-''')
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    app.setStyleSheet('''
+        QWidget {
+            font-size: 20px;
+        }
+        QLineEdit {
+            font-size: 20px;
+            padding: 2px;
+        }
+    ''')
 
-window = TagUI()
-window.show()
+    window = TagUI()
+    window.show()
 
-app.exec()
+    app.exec()
