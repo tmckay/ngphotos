@@ -70,6 +70,15 @@ class TagUI(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
+        self.width_label = QLabel('width')
+        layout.addWidget(self.width_label)
+
+        self.height_label = QLabel('height')
+        layout.addWidget(self.height_label)
+
+        self.width_label.setText(str(self.frameGeometry().width()))
+        self.height_label.setText(str(self.frameGeometry().height()))
+
         self.instructions = QLabel('Select a directory to start tagging images:')
         layout.addWidget(self.instructions)
 
@@ -103,6 +112,10 @@ class TagUI(QWidget):
 
         self._init_backend()
         self.backend.create_table()
+
+    def resizeEvent(self, event):
+        self.width_label.setText(str(self.frameGeometry().width()))
+        self.height_label.setText(str(self.frameGeometry().height()))
 
     def _init_backend(self):
         self.backend = Backend(DB_PATH)
