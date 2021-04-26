@@ -8,7 +8,17 @@ import pathlib
 import sqlite3
 import sys
 
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QFileDialog, QLineEdit, QPushButton, QLabel, QMainWindow
+from PyQt6.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QGridLayout,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QPushButton,
+    QVBoxLayout,
+    QWidget
+)
 from PyQt6.QtGui import QPixmap
 
 
@@ -67,55 +77,74 @@ class TagUI(QWidget):
 
         self.all_images = None
 
-        layout = QVBoxLayout()
-        self.setLayout(layout)
+        self.layout = QGridLayout()
+        self.setLayout(self.layout)
 
-        self.width_label = QLabel('width')
-        layout.addWidget(self.width_label)
-
-        self.height_label = QLabel('height')
-        layout.addWidget(self.height_label)
-
-        self.width_label.setText(str(self.frameGeometry().width()))
-        self.height_label.setText(str(self.frameGeometry().height()))
-
-        self.instructions = QLabel('Select a directory to start tagging images:')
-        layout.addWidget(self.instructions)
-
-        self.line_edit = QLineEdit()
-        layout.addWidget(self.line_edit)
-
-        button = QPushButton('Browse')
-        button.clicked.connect(self._open_file_dialog)
-        layout.addWidget(button)
-
-        start = QPushButton('&Start Tagging')
-        start.clicked.connect(self._get_image_files)
-        layout.addWidget(start)
-
-        self.error_message = QLabel()
-        layout.addWidget(self.error_message)
-
-        self.image_label = QLabel()
-        self.pixmap = QPixmap()
-        self.pixmap.load('../kauai_waterfall.jpg')
-        self.image_label.setPixmap(self.pixmap)
-        layout.addWidget(self.image_label)
-
-        tag_instructions = QLabel('Add tags separated by spaces:')
-        layout.addWidget(tag_instructions)
-
-        self.tags = QLineEdit()
-        layout.addWidget(self.tags)
+        self._init_directory_selection_ui()
+        self._init_tagging_ui()
+        self._init_window_geometry_ui()
 
         self._set_default_directory()
 
         self._init_backend()
         self.backend.create_table()
 
+    def _init_directory_selection_ui(self):
+        self.instructions = QLabel('Select a directory to start tagging images:')
+        self.layout.addWidget(self.instructions, 0, 0)
+
+        self.line_edit = QLineEdit()
+        self.layout.addWidget(self.line_edit, 0, 1)
+
+        button = QPushButton('Browse')
+        button.clicked.connect(self._open_file_dialog)
+        self.layout.addWidget(button, 0, 2)
+
+    def _init_tagging_ui(self):
+        start = QPushButton('Start Tagging')
+        start.clicked.connect(self._get_image_files)
+        self.layout.addWidget(start, 1, 2)
+
+        self.error_message = QLabel()
+        self.layout.addWidget(self.error_message, 1, 1)
+
+        self.image_label = QLabel()
+        self.pixmap = QPixmap()
+        self.pixmap.load('../kauai_waterfall.jpg')
+        self.image_label.setPixmap(self.pixmap)
+        self.layout.addWidget(self.image_label, 2, 0, 1, 3)
+
+        tag_instructions = QLabel('Add tags separated by spaces:')
+        self.layout.addWidget(tag_instructions, 3, 0)
+
+        self.tags = QLineEdit()
+        self.layout.addWidget(self.tags, 3, 1)
+
+        save_and_next = QPushButton('Save and Next')
+        save_and_next.clicked.connect(self._get_image_files)
+        self.layout.addWidget(save_and_next, 3, 2)
+
+    def _init_window_geometry_ui(self):
+        self.width_label = QLabel()
+        self.layout.addWidget(self.width_label, 4, 2)
+
+        self.height_label = QLabel()
+        self.layout.addWidget(self.height_label, 5, 2)
+
+        self._set_width_text()
+        self._set_height_text()
+
     def resizeEvent(self, event):
-        self.width_label.setText(str(self.frameGeometry().width()))
-        self.height_label.setText(str(self.frameGeometry().height()))
+        self._set_width_text()
+        self._set_height_text()
+
+    def _set_width_text(self):
+        width = str(self.frameGeometry().width())
+        self.width_label.setText('width: ' + width + 'px')
+
+    def _set_height_text(self):
+        height = str(self.frameGeometry().height())
+        self.height_label.setText('height: ' + height + 'px')
 
     def _init_backend(self):
         self.backend = Backend(DB_PATH)
