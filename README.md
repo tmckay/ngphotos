@@ -1,5 +1,8 @@
 # ngphotos (Next Generation Photos)
 
+# Status
+This is very much a prototype quality code base that is meant as an exploration of a new way to organize photos.
+
 # What
 Most photo albums are static and are grouped based on time or a particular event. ngphotos takes
 a different approach by emphasizing photo tagging and turning complex queries into albums.
