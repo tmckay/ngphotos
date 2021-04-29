@@ -66,6 +66,12 @@ class Backend:
         self.cur.execute(f'''INSERT INTO images VALUES ('{path}', '{md5}')''')
         self.con.commit()
 
+    def reset(self):
+        self.cur.execute('''DROP TABLE images''')
+        self.con.commit()
+
+        self.create_table()
+
     def close(self):
         self.con.close()
 
@@ -83,6 +89,7 @@ class TagUI(QWidget):
         self._init_directory_selection_ui()
         self._init_tagging_ui()
         self._init_window_geometry_ui()
+        self._init_reset_database_ui()
 
         self._set_default_directory()
 
@@ -133,6 +140,14 @@ class TagUI(QWidget):
 
         self._set_width_text()
         self._set_height_text()
+
+    def _reset_database(self):
+        self.backend.reset()
+
+    def _init_reset_database_ui(self):
+        reset_database = QPushButton('Reset Database')
+        reset_database.clicked.connect(self._reset_database)
+        self.layout.addWidget(reset_database, 6, 2)
 
     def resizeEvent(self, event):
         self._set_width_text()
