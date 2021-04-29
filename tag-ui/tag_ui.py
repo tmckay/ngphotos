@@ -29,7 +29,7 @@ class FileScanner:
     def __init__(self, search_dir, extensions):
         print('init scanner')
         self.ctx = mp.get_context('spawn')
-        self.queue = self.ctx.Queue()
+        self.queue = self.ctx.Queue(1)
         self.search_dir = search_dir
         self.extensions = extensions
 
@@ -59,11 +59,15 @@ class Backend:
 
     def create_table(self):
         self.cur.execute('''CREATE TABLE IF NOT EXISTS images
-                            (path text, md5 text)''')
+                            (path text, md5 text, tags text)''')
         self.con.commit()
 
     def add_image(self, path, md5):
-        self.cur.execute(f'''INSERT INTO images VALUES ('{path}', '{md5}')''')
+        self.cur.execute(f'''INSERT INTO images VALUES ('{path}', '{md5}', '')''')
+        self.con.commit()
+
+    def update_tags(self, path, tags):
+        self.cur.execute(f'''UPDATE images SET tags = '{tags}' WHERE path == '{path}' ''')
         self.con.commit()
 
     def reset(self):
@@ -128,8 +132,16 @@ class TagUI(QWidget):
         self.layout.addWidget(self.tags, 3, 1)
 
         save_and_next = QPushButton('Save and Next')
-        save_and_next.clicked.connect(self._get_image_files)
+        save_and_next.clicked.connect(self._save_and_next)
         self.layout.addWidget(save_and_next, 3, 2)
+
+    def _save_and_next(self):
+        self._save_tags()
+        self._get_image_files()
+
+    def _save_tags(self):
+        tags = self.tags.text()
+        self.backend.update_tags(self.image_path, tags)
 
     def _init_window_geometry_ui(self):
         self.width_label = QLabel()
@@ -197,13 +209,12 @@ class TagUI(QWidget):
             self.all_images = scanner.queue
             self.image_idx = 0
 
-        #image_path = self.all_images[self.image_idx]
-        image_path = self.all_images.get()
-        self.pixmap.load(image_path)
+        self.image_path = self.all_images.get()
+        self.pixmap.load(self.image_path)
         # TODO dynamically resize based on resolution
         self.pixmap = self.pixmap.scaledToWidth(1000)
         self.image_label.setPixmap(self.pixmap)
-        self.backend.add_image(image_path, '123abc')
+        self.backend.add_image(self.image_path, '123abc')
 
         self.image_idx += 1
 
