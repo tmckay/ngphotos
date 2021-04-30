@@ -1,6 +1,7 @@
 """
 Display images and allow users to add tags to them
 """
+from collections import deque
 import multiprocessing as mp
 from multiprocessing import Process, Queue
 import os
@@ -23,6 +24,9 @@ from PyQt6.QtGui import QPixmap
 
 
 DB_PATH = os.path.expanduser('~/ngphotos.db')
+IMAGE_TABLE = 'images'
+TAG_TABLE = 'tags'
+IMAGE_TAGS_TABLE = 'image_tags'
 
 
 class FileScanner:
@@ -58,20 +62,53 @@ class Backend:
         self.cur = self.con.cursor()
 
     def create_table(self):
-        self.cur.execute('''CREATE TABLE IF NOT EXISTS images
-                            (path text, md5 text, tags text)''')
+        self.cur.execute(f'''CREATE TABLE IF NOT EXISTS {IMAGE_TABLE}
+                            (imageid INTEGER PRIMARY KEY, path TEXT, md5 TEXT)''')
+        self.cur.execute(f'''CREATE TABLE IF NOT EXISTS {TAG_TABLE}
+                            (tagid INTEGER PRIMARY KEY, tag_value)''')
+        self.cur.execute(f'''CREATE TABLE IF NOT EXISTS {IMAGE_TAGS_TABLE} (
+                                tagid INTEGER,
+                                imageid INTEGER,
+                                FOREIGN KEY(tagid) REFERENCES {TAG_TABLE}(tagid),
+                                FOREIGN KEY(imageid) REFERENCES {IMAGE_TABLE}(imageid)
+                             )''')
         self.con.commit()
 
     def add_image(self, path, md5):
-        self.cur.execute(f'''INSERT INTO images VALUES ('{path}', '{md5}', '')''')
+        self.cur.execute(f'''INSERT INTO {IMAGE_TABLE} VALUES (null, '{path}', '{md5}')''')
+        self.image_id = self.cur.lastrowid
         self.con.commit()
 
     def update_tags(self, path, tags):
-        self.cur.execute(f'''UPDATE images SET tags = '{tags}' WHERE path == '{path}' ''')
-        self.con.commit()
+
+        def insert_tag(tag):
+            print(f'calling insert tag {tag}')
+            self.cur.execute(f'''INSERT INTO {TAG_TABLE} VALUES (null, '{tags}')''')
+            tag_id = self.cur.lastrowid
+            self.cur.execute(f'''INSERT INTO {IMAGE_TAGS_TABLE} VALUES ('{tag_id}', '{self.image_id}')''')
+            self.con.commit()
+
+        # TODO move tag parsing out of backend
+        current = deque() 
+        quoted = False
+        for char in tags:
+            if char == '"':
+                quoted = not quoted
+            elif char == ' ' and not quoted:
+                tag = ''.join(current)
+                current = deque() 
+                insert_tag(tag)
+            else:
+                current.append(char)
+
+        if current:
+            tag = ''.join(current)
+            insert_tag(tag)
 
     def reset(self):
-        self.cur.execute('''DROP TABLE images''')
+        self.cur.execute(f'''DROP TABLE {IMAGE_TABLE}''')
+        self.cur.execute(f'''DROP TABLE {TAG_TABLE}''')
+        self.cur.execute(f'''DROP TABLE {IMAGE_TAGS_TABLE}''')
         self.con.commit()
 
         self.create_table()
