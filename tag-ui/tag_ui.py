@@ -83,7 +83,7 @@ class Backend:
 
         def insert_tag(tag):
             print(f'calling insert tag {tag}')
-            self.cur.execute(f'''INSERT INTO {TAG_TABLE} VALUES (null, '{tags}')''')
+            self.cur.execute(f'''INSERT INTO {TAG_TABLE} VALUES (null, '{tag}')''')
             tag_id = self.cur.lastrowid
             self.cur.execute(f'''INSERT INTO {IMAGE_TAGS_TABLE} VALUES ('{tag_id}', '{self.image_id}')''')
             self.con.commit()
