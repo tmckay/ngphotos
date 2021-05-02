@@ -39,6 +39,7 @@ class FileScanner:
 
     @staticmethod
     def _scan(search_dir, extensions, queue):
+        """Scans a directory recursively"""
         for dirpath, dirs, files in os.walk(search_dir):
             for file_ in files:
                 print(f'scanning {file_}')
@@ -49,10 +50,10 @@ class FileScanner:
                     queue.put(full_path)
 
     def start(self):
+        """Starts separate process"""
         print('start scanner')
         self.process = self.ctx.Process(target=self._scan, args=(self.search_dir, self.extensions, self.queue,), daemon=True)
         self.process.start()
-        #self.process.join()
 
 
 class Backend:
@@ -73,6 +74,15 @@ class Backend:
                                 FOREIGN KEY(imageid) REFERENCES {IMAGE_TABLE}(imageid)
                              )''')
         self.con.commit()
+
+    def get_images_by_tag(self, tag):
+        self.cur.execute(f'''SELECT * FROM {IMAGE_TABLE}
+                             INNER JOIN {IMAGE_TAGS_TABLE}
+                             ON {IMAGE_TABLE}.imageid = {IMAGE_TAGS_TABLE}.imageid
+                             INNER JOIN {TAG_TABLE}
+                             ON {IMAGE_TAGS_TABLE}.tagid = {TAG_TABLE}.tagid
+                             WHERE tag_value = '{tag}' ''')
+        return self.cur.fetchall()
 
     def add_image(self, path, md5):
         self.cur.execute(f'''INSERT INTO {IMAGE_TABLE} VALUES (null, '{path}', '{md5}')''')
@@ -129,6 +139,7 @@ class TagUI(QWidget):
 
         self._init_directory_selection_ui()
         self._init_tagging_ui()
+        self._init_get_images_by_tag()
         self._init_window_geometry_ui()
         self._init_reset_database_ui()
 
@@ -180,12 +191,28 @@ class TagUI(QWidget):
         tags = self.tags.text()
         self.backend.update_tags(self.image_path, tags)
 
+    def _init_get_images_by_tag(self):
+        get_images_by_tag_instruction = QLabel('Enter tag value to get images')
+        self.layout.addWidget(get_images_by_tag_instruction, 4, 0)
+
+        self.get_tag = QLineEdit()
+        self.layout.addWidget(self.get_tag, 4, 1)
+
+        get_images_by_tag = QPushButton('Get Images')
+        get_images_by_tag.clicked.connect(self._get_images_by_tag)
+        self.layout.addWidget(get_images_by_tag, 4, 2)
+
+    def _get_images_by_tag(self):
+        tag = self.get_tag.text()
+        images = self.backend.get_images_by_tag(tag)
+        print(images)
+
     def _init_window_geometry_ui(self):
         self.width_label = QLabel()
-        self.layout.addWidget(self.width_label, 4, 2)
+        self.layout.addWidget(self.width_label, 5, 2)
 
         self.height_label = QLabel()
-        self.layout.addWidget(self.height_label, 5, 2)
+        self.layout.addWidget(self.height_label, 6, 2)
 
         self._set_width_text()
         self._set_height_text()
@@ -196,7 +223,7 @@ class TagUI(QWidget):
     def _init_reset_database_ui(self):
         reset_database = QPushButton('Reset Database')
         reset_database.clicked.connect(self._reset_database)
-        self.layout.addWidget(reset_database, 6, 2)
+        self.layout.addWidget(reset_database, 7, 2)
 
     def resizeEvent(self, event):
         self._set_width_text()
