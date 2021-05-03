@@ -63,10 +63,15 @@ class Backend:
         self.cur = self.con.cursor()
 
     def create_table(self):
-        self.cur.execute(f'''CREATE TABLE IF NOT EXISTS {IMAGE_TABLE}
-                            (imageid INTEGER PRIMARY KEY, path TEXT, md5 TEXT)''')
-        self.cur.execute(f'''CREATE TABLE IF NOT EXISTS {TAG_TABLE}
-                            (tagid INTEGER PRIMARY KEY, tag_value)''')
+        self.cur.execute(f'''CREATE TABLE IF NOT EXISTS {IMAGE_TABLE} (
+                                imageid INTEGER PRIMARY KEY,
+                                path TEXT,
+                                md5 TEXT
+                             )''')
+        self.cur.execute(f'''CREATE TABLE IF NOT EXISTS {TAG_TABLE} (
+                                tagid INTEGER PRIMARY KEY,
+                                tag_value TEXT UNIQUE
+                             )''')
         self.cur.execute(f'''CREATE TABLE IF NOT EXISTS {IMAGE_TAGS_TABLE} (
                                 tagid INTEGER,
                                 imageid INTEGER,
@@ -93,8 +98,18 @@ class Backend:
 
         def insert_tag(tag):
             print(f'calling insert tag {tag}')
-            self.cur.execute(f'''INSERT INTO {TAG_TABLE} VALUES (null, '{tag}')''')
-            tag_id = self.cur.lastrowid
+
+            self.cur.execute(f'''SELECT * FROM {TAG_TABLE} WHERE tag_value = '{tag}' ''')
+            rows = self.cur.fetchall()
+            assert len(rows) <= 1
+
+            if len(rows) == 1:
+                tag_id = rows[0][0]
+
+            else:
+                self.cur.execute(f'''INSERT INTO {TAG_TABLE} VALUES (null, '{tag}')''')
+                tag_id = self.cur.lastrowid
+
             self.cur.execute(f'''INSERT INTO {IMAGE_TAGS_TABLE} VALUES ('{tag_id}', '{self.image_id}')''')
             self.con.commit()
 
