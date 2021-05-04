@@ -29,6 +29,31 @@ TAG_TABLE = 'tags'
 IMAGE_TAGS_TABLE = 'image_tags'
 
 
+class Tags:
+    @staticmethod
+    def parse(raw_tag_input):
+        parsed_tags = [] 
+
+        current = deque() 
+        quoted = False
+        for char in raw_tag_input:
+            if char == '"':
+                quoted = not quoted
+            elif char == ' ' and not quoted:
+                tag = ''.join(current)
+                current = deque() 
+                parsed_tags.append(tag) 
+            else:
+                current.append(char)
+
+        # case when we only have one tag
+        if current:
+            tag = ''.join(current)
+            parsed_tags.append(tag) 
+
+        return parsed_tags
+
+
 class FileScanner:
     def __init__(self, search_dir, extensions):
         print('init scanner')
@@ -113,21 +138,7 @@ class Backend:
             self.cur.execute(f'''INSERT INTO {IMAGE_TAGS_TABLE} VALUES ('{tag_id}', '{self.image_id}')''')
             self.con.commit()
 
-        # TODO move tag parsing out of backend
-        current = deque() 
-        quoted = False
-        for char in tags:
-            if char == '"':
-                quoted = not quoted
-            elif char == ' ' and not quoted:
-                tag = ''.join(current)
-                current = deque() 
-                insert_tag(tag)
-            else:
-                current.append(char)
-
-        if current:
-            tag = ''.join(current)
+        for tag in Tags.parse(tags):
             insert_tag(tag)
 
     def reset(self):
