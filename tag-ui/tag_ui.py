@@ -90,7 +90,7 @@ class Backend:
     def create_table(self):
         self.cur.execute(f'''CREATE TABLE IF NOT EXISTS {IMAGE_TABLE} (
                                 imageid INTEGER PRIMARY KEY,
-                                path TEXT,
+                                path TEXT UNIQUE,
                                 md5 TEXT
                              )''')
         self.cur.execute(f'''CREATE TABLE IF NOT EXISTS {TAG_TABLE} (
@@ -115,9 +115,16 @@ class Backend:
         return self.cur.fetchall()
 
     def add_image(self, path, md5):
-        self.cur.execute(f'''INSERT INTO {IMAGE_TABLE} VALUES (null, '{path}', '{md5}')''')
-        self.image_id = self.cur.lastrowid
-        self.con.commit()
+        self.cur.execute(f'''SELECT imageid from {IMAGE_TABLE} WHERE path = '{path}' ''')
+        rows = self.cur.fetchall()
+        assert len(rows) <= 1
+
+        if len(rows) == 1:
+            self.image_id = rows[0][0]
+        elif len(rows) == 0:
+            self.cur.execute(f'''INSERT INTO {IMAGE_TABLE} VALUES (null, '{path}', '{md5}')''')
+            self.image_id = self.cur.lastrowid
+            self.con.commit()
 
     def update_tags(self, path, tags):
 
@@ -134,9 +141,8 @@ class Backend:
             else:
                 self.cur.execute(f'''INSERT INTO {TAG_TABLE} VALUES (null, '{tag}')''')
                 tag_id = self.cur.lastrowid
-
-            self.cur.execute(f'''INSERT INTO {IMAGE_TAGS_TABLE} VALUES ('{tag_id}', '{self.image_id}')''')
-            self.con.commit()
+                self.cur.execute(f'''INSERT INTO {IMAGE_TAGS_TABLE} VALUES ('{tag_id}', '{self.image_id}')''')
+                self.con.commit()
 
         for tag in Tags.parse(tags):
             insert_tag(tag)
