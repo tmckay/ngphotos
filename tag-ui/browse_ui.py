@@ -1,8 +1,10 @@
+import pathlib
 import sys
 
 from PyQt6.QtWidgets import (
     QApplication,
     QGridLayout,
+    QFrame,
     QLabel,
     QLineEdit,
     QMainWindow,
@@ -10,6 +12,7 @@ from PyQt6.QtWidgets import (
 )
 
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QAction
 
 
 class BrowseWidget(QWidget):
@@ -21,6 +24,8 @@ class BrowseWidget(QWidget):
 
         self.path_edit = QLineEdit()
         self.layout.addWidget(self.path_edit, 0, 0)
+        self.path_edit.setText(str(pathlib.Path.home()))
+        self.path_edit.setAlignment(Qt.Alignment.AlignTop)
 
 
 class Browse(QMainWindow):
@@ -29,7 +34,12 @@ class Browse(QMainWindow):
 
         self.setWindowTitle('ngphotos :: browse')
 
-        self.setCentralWidget(BrowseWidget())
+        self.statusBar().showMessage('Ready')
+
+        central_widget = BrowseWidget()
+        self.setCentralWidget(central_widget)
+
+        self.resize(400, 200)
 
 
 if __name__ == '__main__':
