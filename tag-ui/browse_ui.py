@@ -3,6 +3,7 @@ from multiprocessing import Process, Queue
 import os
 import pathlib
 import sys
+import time
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -15,7 +16,7 @@ from PyQt6.QtWidgets import (
 )
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QPixmap
 
 
 class FileScanner:
@@ -29,12 +30,14 @@ class FileScanner:
     @staticmethod
     def _scan(search_dir, extensions, queue):
         """Scans a directory"""
+        print(f'scanning {search_dir}')
         for item in os.listdir(search_dir):
-            print(f'scanning {item}')
             path = os.path.join(search_dir, item)
             if os.path.isfile(path):
                 ext = os.path.splitext(path)[1].lower()
+                print(f'found extension {ext}')
                 if ext in extensions:
+                    print(f'adding {path}')
                     queue.put(path)
 
     def start(self):
@@ -45,8 +48,10 @@ class FileScanner:
 
 
 class BrowseWidget(QWidget):
-    def __init__(self):
+    def __init__(self, main_window):
         super().__init__()
+
+        self.main_window = main_window
 
         self.layout = QGridLayout()
         self.setLayout(self.layout)
@@ -59,12 +64,30 @@ class BrowseWidget(QWidget):
 
         self._start_scanning()
 
+        self._load_images()
+
     def _start_scanning(self):
-        self.scanner = FileScanner(self.path_edit.text(), ['jpg', 'jpeg', 'png'])
+        self.scanner = FileScanner(self.path_edit.text(), ['.jpg', '.jpeg', '.png'])
         self.scanner.start()
 
-        #while not self.scanner.queue.empty():
-        #    self.statusBar().showMessage(self.scanner.queue.get())
+        #self.main_window.statusBar().showMessage(
+        #    self.scanner.queue.get()
+        #)
+
+    def _load_images(self):
+
+        while self.scanner.queue.empty():
+            time.sleep(0.1)
+
+        idx = 0
+        while not self.scanner.queue.empty():
+            label = QLabel()
+            pix = QPixmap()
+            pix.load(self.scanner.queue.get())
+            pix = pix.scaledToWidth(200)
+            label.setPixmap(pix)
+            self.layout.addWidget(label, idx // 3 + 1, idx % 3) 
+            idx += 1
 
 
 class Browse(QMainWindow):
@@ -75,7 +98,7 @@ class Browse(QMainWindow):
 
         self.statusBar().showMessage('Ready')
 
-        central_widget = BrowseWidget()
+        central_widget = BrowseWidget(self)
         self.setCentralWidget(central_widget)
 
         self.resize(400, 200)
