@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
     QWidget
 )
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QAction, QPixmap
 
 
@@ -51,6 +51,8 @@ class BrowseWidget(QWidget):
     def __init__(self, main_window):
         super().__init__()
 
+        self._images = []
+
         self.main_window = main_window
 
         self.layout = QGridLayout()
@@ -61,6 +63,18 @@ class BrowseWidget(QWidget):
         self.layout.setAlignment(self.path_edit, Qt.Alignment.AlignTop)
         self.path_edit.setText(str(pathlib.Path.home()))
         self.path_edit.setAlignment(Qt.Alignment.AlignTop)
+        self.path_edit.returnPressed.connect(self._update_images)
+        
+        self._update_images()
+
+    def _remove_images(self):
+        self._images.reverse()
+        for img in self._images:
+            img.clear()
+            self.layout.removeWidget(img)
+
+    def _update_images(self):
+        self._remove_images()
 
         self._start_scanning()
 
@@ -69,10 +83,6 @@ class BrowseWidget(QWidget):
     def _start_scanning(self):
         self.scanner = FileScanner(self.path_edit.text(), ['.jpg', '.jpeg', '.png'])
         self.scanner.start()
-
-        #self.main_window.statusBar().showMessage(
-        #    self.scanner.queue.get()
-        #)
 
     def _load_images(self):
 
@@ -85,8 +95,13 @@ class BrowseWidget(QWidget):
             pix = QPixmap()
             pix.load(self.scanner.queue.get())
             pix = pix.scaledToWidth(200)
+            #pix = pix.scaled(
+            #    QSize(200, 200),
+            #    Qt.AspectRatioMode.KeepAspectRatio
+            #)
             label.setPixmap(pix)
             self.layout.addWidget(label, idx // 3 + 1, idx % 3) 
+            self._images.append(label)
             idx += 1
 
 
