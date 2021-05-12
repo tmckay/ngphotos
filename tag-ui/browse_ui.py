@@ -58,20 +58,23 @@ class BrowseWidget(QWidget):
         self.layout = QGridLayout()
         self.setLayout(self.layout)
 
+        self._setup_input()
+
+        self._update_images()
+
+    def _setup_input(self):
         self.path_edit = QLineEdit()
         self.layout.addWidget(self.path_edit, 0, 0)
         self.layout.setAlignment(self.path_edit, Qt.Alignment.AlignTop)
         self.path_edit.setText(str(pathlib.Path.home()))
         self.path_edit.setAlignment(Qt.Alignment.AlignTop)
         self.path_edit.returnPressed.connect(self._update_images)
-        
-        self._update_images()
 
     def _remove_images(self):
         self._images.reverse()
         for img in self._images:
-            img.clear()
-            self.layout.removeWidget(img)
+            #self.layout.removeWidget(img)
+            img.hide()
 
     def _update_images(self):
         self._remove_images()
@@ -100,7 +103,9 @@ class BrowseWidget(QWidget):
             #    Qt.AspectRatioMode.KeepAspectRatio
             #)
             label.setPixmap(pix)
+            #self.layout.addWidget(label, idx // 3 + 1, idx % 3) 
             self.layout.addWidget(label, idx // 3 + 1, idx % 3) 
+            self.layout.setAlignment(label, Qt.Alignment.AlignTop)
             self._images.append(label)
             idx += 1
 
