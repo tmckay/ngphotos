@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
 )
 
 from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QAction, QPixmap
+from PyQt6.QtGui import QAction, QPixmap, QGuiApplication
 
 
 class FileScanner:
@@ -54,6 +54,12 @@ class BrowseWidget(QWidget):
         self._images = []
 
         self.main_window = main_window
+
+        screen_width = QGuiApplication.primaryScreen().size().width()
+        screen_height = QGuiApplication.primaryScreen().size().height()
+        self.main_window.statusBar().showMessage(
+            f'Width: {screen_width}px // Height: {screen_height}px'
+        )
 
         self.layout = QGridLayout()
         self.setLayout(self.layout)
