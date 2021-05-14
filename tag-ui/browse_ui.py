@@ -46,18 +46,25 @@ class FileScanner:
         self.process = self.ctx.Process(target=self._scan, args=(self.search_dir, self.extensions, self.queue,), daemon=True)
         self.process.start()
 
+    def clear_queue(self):
+        """Empties all items from the queue"""
+        while not self.queue.empty():
+            self.queue.get()
+
 
 class BrowseWidget(QWidget):
-    def __init__(self, main_window):
+    """QWidget that provides an interface for browsing images on a local filesystem"""
+    def __init__(self, main_window: QMainWindow):
         super().__init__()
 
-        self._images = []
+        # Reference to window that contains this widget
+        self._main_window = main_window
+        self._images = []  # Stores each image widget
 
-        self.main_window = main_window
 
         screen_width = QGuiApplication.primaryScreen().size().width()
         screen_height = QGuiApplication.primaryScreen().size().height()
-        self.main_window.statusBar().showMessage(
+        self._main_window.statusBar().showMessage(
             f'Width: {screen_width}px // Height: {screen_height}px'
         )
 
@@ -74,7 +81,12 @@ class BrowseWidget(QWidget):
         self.layout.setAlignment(self.path_edit, Qt.Alignment.AlignTop)
         self.path_edit.setText(str(pathlib.Path.home()))
         self.path_edit.setAlignment(Qt.Alignment.AlignTop)
-        self.path_edit.returnPressed.connect(self._update_images)
+
+        self.path_edit.returnPressed.connect(self._update_path)
+
+    def _update_path(self):
+        self.scanner.clear_queue()
+        self._update_images()
 
     def _remove_images(self):
         self._images.reverse()
@@ -94,6 +106,7 @@ class BrowseWidget(QWidget):
         self.scanner.start()
 
     def _load_images(self):
+        """Reads images from multiprocessing queue and inserts them into widget UI"""
 
         while self.scanner.queue.empty():
             time.sleep(0.1)
@@ -104,13 +117,9 @@ class BrowseWidget(QWidget):
             pix = QPixmap()
             pix.load(self.scanner.queue.get())
             pix = pix.scaledToWidth(200)
-            #pix = pix.scaled(
-            #    QSize(200, 200),
-            #    Qt.AspectRatioMode.KeepAspectRatio
-            #)
             label.setPixmap(pix)
-            #self.layout.addWidget(label, idx // 3 + 1, idx % 3) 
-            self.layout.addWidget(label, idx // 3 + 1, idx % 3) 
+            #self.layout.addWidget(label, idx // 3 + 1, idx % 3)
+            self.layout.addWidget(label, idx // 3 + 1, idx % 3)
             self.layout.setAlignment(label, Qt.Alignment.AlignTop)
             self._images.append(label)
             idx += 1
