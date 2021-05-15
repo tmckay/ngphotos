@@ -30,6 +30,8 @@ class FileScanner:
     @staticmethod
     def _scan(search_dir, extensions, queue):
         """Scans a directory"""
+        if not os.path.exists(search_dir) and not os.path.isdir(search_dir):
+            return
         print(f'scanning {search_dir}')
         for item in os.listdir(search_dir):
             path = os.path.join(search_dir, item)
@@ -87,6 +89,7 @@ class BrowseWidget(QWidget):
     def _update_path(self):
         self.scanner.clear_queue()
         self._update_images()
+        self._main_window.resize(self._main_window.minimumSizeHint())
 
     def _remove_images(self):
         self._images.reverse()
@@ -112,13 +115,13 @@ class BrowseWidget(QWidget):
             time.sleep(0.1)
 
         idx = 0
-        while not self.scanner.queue.empty():
+        # TODO calculate number of pictures based on geometry
+        while idx < 9 and not self.scanner.queue.empty():
             label = QLabel()
             pix = QPixmap()
             pix.load(self.scanner.queue.get())
             pix = pix.scaledToWidth(200)
             label.setPixmap(pix)
-            #self.layout.addWidget(label, idx // 3 + 1, idx % 3)
             self.layout.addWidget(label, idx // 3 + 1, idx % 3)
             self.layout.setAlignment(label, Qt.Alignment.AlignTop)
             self._images.append(label)
