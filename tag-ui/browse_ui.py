@@ -122,8 +122,14 @@ class BrowseWidget(QWidget):
             pix.load(self.scanner.queue.get())
             pix = pix.scaledToWidth(200)
             label.setPixmap(pix)
-            self.layout.addWidget(label, idx // 3 + 1, idx % 3)
+            row = idx // 3 + 1
+            col = idx % 3
+            self.layout.addWidget(label, row, col)
             self.layout.setAlignment(label, Qt.Alignment.AlignTop)
+            cell_rect = self.layout.cellRect(row, col)
+            cell_height = cell_rect.height()
+            cell_width = cell_rect.width()
+            print(f'Cell geometry: {row} x {col} - {cell_width} x {cell_height}')
             self._images.append(label)
             idx += 1
 
