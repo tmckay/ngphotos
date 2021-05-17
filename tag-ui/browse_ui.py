@@ -1,6 +1,3 @@
-import multiprocessing as mp
-from multiprocessing import Process, Queue
-import os
 import pathlib
 import sys
 import time
@@ -8,51 +5,16 @@ import time
 from PyQt6.QtWidgets import (
     QApplication,
     QGridLayout,
-    QFrame,
     QLabel,
     QLineEdit,
     QMainWindow,
     QWidget
 )
 
-from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QAction, QPixmap, QGuiApplication
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap, QGuiApplication
 
-
-class FileScanner:
-    def __init__(self, search_dir, extensions):
-        print('init scanner')
-        self.ctx = mp.get_context('spawn')
-        self.queue = self.ctx.Queue(1)
-        self.search_dir = search_dir
-        self.extensions = extensions
-
-    @staticmethod
-    def _scan(search_dir, extensions, queue):
-        """Scans a directory"""
-        if not os.path.exists(search_dir) and not os.path.isdir(search_dir):
-            return
-        print(f'scanning {search_dir}')
-        for item in os.listdir(search_dir):
-            path = os.path.join(search_dir, item)
-            if os.path.isfile(path):
-                ext = os.path.splitext(path)[1].lower()
-                print(f'found extension {ext}')
-                if ext in extensions:
-                    print(f'adding {path}')
-                    queue.put(path)
-
-    def start(self):
-        """Starts separate process"""
-        print('start scanner')
-        self.process = self.ctx.Process(target=self._scan, args=(self.search_dir, self.extensions, self.queue,), daemon=True)
-        self.process.start()
-
-    def clear_queue(self):
-        """Empties all items from the queue"""
-        while not self.queue.empty():
-            self.queue.get()
-
+import scanner
 
 class BrowseWidget(QWidget):
     """QWidget that provides an interface for browsing images on a local filesystem"""
@@ -105,7 +67,7 @@ class BrowseWidget(QWidget):
         self._load_images()
 
     def _start_scanning(self):
-        self.scanner = FileScanner(self.path_edit.text(), ['.jpg', '.jpeg', '.png'])
+        self.scanner = scanner.FileScanner(self.path_edit.text(), ['.jpg', '.jpeg', '.png'])
         self.scanner.start()
 
     def _load_images(self):
