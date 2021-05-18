@@ -41,7 +41,7 @@ class BrowseWidget(QWidget):
 
     def _setup_input(self):
         self.path_edit = QLineEdit()
-        self.layout.addWidget(self.path_edit, 0, 0)
+        self.layout.addWidget(self.path_edit, 0, 0, 1, 3)
         self.layout.setAlignment(self.path_edit, Qt.Alignment.AlignTop)
         self.path_edit.setText(str(pathlib.Path.home()))
         self.path_edit.setAlignment(Qt.Alignment.AlignTop)
