@@ -16,15 +16,16 @@ from PyQt6.QtGui import QPixmap, QGuiApplication
 
 import scanner
 
+
 class BrowseWidget(QWidget):
-    """QWidget that provides an interface for browsing images on a local filesystem"""
+    """QWidget that provides an interface for browsing
+       images on a local filesystem"""
     def __init__(self, main_window: QMainWindow):
         super().__init__()
 
         # Reference to window that contains this widget
         self._main_window = main_window
         self._images = []  # Stores each image widget
-
 
         screen_width = QGuiApplication.primaryScreen().size().width()
         screen_height = QGuiApplication.primaryScreen().size().height()
@@ -56,7 +57,6 @@ class BrowseWidget(QWidget):
     def _remove_images(self):
         self._images.reverse()
         for img in self._images:
-            #self.layout.removeWidget(img)
             img.hide()
 
     def _update_images(self):
@@ -67,11 +67,15 @@ class BrowseWidget(QWidget):
         self._load_images()
 
     def _start_scanning(self):
-        self.scanner = scanner.FileScanner(self.path_edit.text(), ['.jpg', '.jpeg', '.png'])
+        self.scanner = scanner.FileScanner(
+            self.path_edit.text(),
+            ['.jpg', '.jpeg', '.png']
+        )
         self.scanner.start()
 
     def _load_images(self):
-        """Reads images from multiprocessing queue and inserts them into widget UI"""
+        """Reads images from multiprocessing queue and
+           inserts them into widget UI"""
 
         while self.scanner.queue.empty():
             time.sleep(0.1)
@@ -91,7 +95,9 @@ class BrowseWidget(QWidget):
             cell_rect = self.layout.cellRect(row, col)
             cell_height = cell_rect.height()
             cell_width = cell_rect.width()
-            print(f'Cell geometry: {row} x {col} - {cell_width} x {cell_height}')
+            print(
+                f'Cell geometry: {row} x {col} - {cell_width} x {cell_height}'
+            )
             self._images.append(label)
             idx += 1
 
