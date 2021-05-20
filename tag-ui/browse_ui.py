@@ -86,7 +86,10 @@ class BrowseWidget(QWidget):
             label = QLabel()
             pix = QPixmap()
             pix.load(self.scanner.queue.get())
-            pix = pix.scaledToWidth(200)
+            if pix.width() > pix.height():
+                pix = pix.scaledToWidth(200)
+            else:
+                pix = pix.scaledToHeight(200)
             pix_width = pix.width()
             pix_height = pix.height()
             label.setToolTip(f'{pix_width}px x {pix_height}px')
@@ -94,7 +97,10 @@ class BrowseWidget(QWidget):
             row = idx // 3 + 1
             col = idx % 3
             self.layout.addWidget(label, row, col)
-            self.layout.setAlignment(label, Qt.Alignment.AlignTop)
+            self.layout.setAlignment(
+                label,
+                Qt.Alignment.AlignVCenter | Qt.Alignment.AlignCenter
+            )
             cell_rect = self.layout.cellRect(row, col)
             cell_height = cell_rect.height()
             cell_width = cell_rect.width()
