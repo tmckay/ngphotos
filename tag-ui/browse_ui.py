@@ -87,6 +87,9 @@ class BrowseWidget(QWidget):
             pix = QPixmap()
             pix.load(self.scanner.queue.get())
             pix = pix.scaledToWidth(200)
+            pix_width = pix.width()
+            pix_height = pix.height()
+            label.setToolTip(f'{pix_width}px x {pix_height}px')
             label.setPixmap(pix)
             row = idx // 3 + 1
             col = idx % 3
