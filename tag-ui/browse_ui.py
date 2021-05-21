@@ -62,16 +62,22 @@ class BrowseWidget(QWidget):
     def _update_images(self):
         self._remove_images()
 
-        self._start_scanning()
+        started = self._start_scanning()
 
-        self._load_images()
+        if started:
+            self._load_images()
 
     def _start_scanning(self):
-        self.scanner = scanner.FileScanner(
-            self.path_edit.text(),
-            ['.jpg', '.jpeg', '.png']
-        )
-        self.scanner.start()
+        path = pathlib.Path(self.path_edit.text())
+
+        if path.is_dir():
+            self.scanner = scanner.FileScanner(
+                str(path),
+                ['.jpg', '.jpeg', '.png']
+            )
+            self.scanner.start()
+            return True
+        return False
 
     def _load_images(self):
         """Reads images from multiprocessing queue and
