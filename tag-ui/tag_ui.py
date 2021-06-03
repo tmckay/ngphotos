@@ -1,7 +1,6 @@
 """
 Display images and allow users to add tags to them
 """
-from collections import deque
 import multiprocessing as mp
 import os
 import pathlib
@@ -22,31 +21,6 @@ from backend import Backend
 
 
 DB_PATH = os.path.expanduser('~/ngphotos.db')
-
-
-class Tags:
-    @staticmethod
-    def parse(raw_tag_input):
-        parsed_tags = [] 
-
-        current = deque() 
-        quoted = False
-        for char in raw_tag_input:
-            if char == '"':
-                quoted = not quoted
-            elif char == ' ' and not quoted:
-                tag = ''.join(current)
-                current = deque() 
-                parsed_tags.append(tag) 
-            else:
-                current.append(char)
-
-        # case when we only have one tag
-        if current:
-            tag = ''.join(current)
-            parsed_tags.append(tag) 
-
-        return parsed_tags
 
 
 class FileScanner:

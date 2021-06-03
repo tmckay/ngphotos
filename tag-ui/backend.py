@@ -1,3 +1,4 @@
+from collections import deque
 from multiprocessing import Process, Queue
 import os
 import sqlite3
@@ -6,6 +7,31 @@ import sqlite3
 IMAGE_TABLE = 'images'
 TAG_TABLE = 'tags'
 IMAGE_TAGS_TABLE = 'image_tags'
+
+
+class Tags:
+    @staticmethod
+    def parse(raw_tag_input):
+        parsed_tags = [] 
+
+        current = deque() 
+        quoted = False
+        for char in raw_tag_input:
+            if char == '"':
+                quoted = not quoted
+            elif char == ' ' and not quoted:
+                tag = ''.join(current)
+                current = deque() 
+                parsed_tags.append(tag) 
+            else:
+                current.append(char)
+
+        # case when we only have one tag
+        if current:
+            tag = ''.join(current)
+            parsed_tags.append(tag) 
+
+        return parsed_tags
 
 
 class Backend:
@@ -53,7 +79,7 @@ class Backend:
             self.image_id = self.cur.lastrowid
             self.con.commit()
 
-    def update_tags(self, path, tags):
+    def update_tags(self, tags):
 
         def insert_tag(tag):
             print(f'calling insert tag {tag}')
