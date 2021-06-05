@@ -34,9 +34,12 @@ def test_add_image_with_tags():
     be.cur.execute('''SELECT count(*) FROM tags''')
     assert be.cur.fetchall()[0][0] == 4
 
-    be.cur.execute('''SELECT count(*) FROM image_tags''')
-    assert be.cur.fetchall()[0][0] == 4
-
     be.cur.execute('''SELECT * FROM tags''')
     tags_added = [row[1] for row in be.cur.fetchall()]
     assert sorted(tags_added) == ['fee', 'fi', 'fo', 'fum'] 
+
+    be.cur.execute('''SELECT * FROM image_tags''')
+    rows = be.cur.fetchall()
+    assert len(rows) == 4
+    for row in rows:
+        assert row[1] == 1
