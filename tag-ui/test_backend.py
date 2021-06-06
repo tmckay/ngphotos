@@ -43,3 +43,19 @@ def test_add_image_with_tags():
     assert len(rows) == 4
     for row in rows:
         assert row[1] == 1
+
+
+def test_get_images_by_tag():
+    tags_to_add = 'fee fi fo fum'
+    be = Backend(':memory:')
+    be.create_table()
+    be.add_image('/Users/foo/images/bar.jpg', '123abc')
+    be.update_tags(tags_to_add)
+
+    be.add_image('/Users/foo/images/baz.jpg', 'abc123')
+    be.update_tags('foo bar')
+    be.add_image('/Users/foo/images/spam.jpg', 'cda321')
+    be.update_tags('foo bar')
+
+    images = be.get_images_by_tag('fee')
+    assert images[0][1] == '/Users/foo/images/bar.jpg'
