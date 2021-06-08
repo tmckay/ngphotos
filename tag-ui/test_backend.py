@@ -45,6 +45,21 @@ def test_add_image_with_tags():
         assert row[1] == 1
 
 
+def test_add_images_with_existing_tags():
+    be = Backend(':memory:')
+    be.create_table()
+    be.add_image('/Users/foo/images/bar.jpg', '123abc')
+    be.update_tags('baz')
+
+    be.add_image('/Users/foo/images/buzz.jpg', 'abc123')
+    be.update_tags('baz')
+
+    be.cur.execute('''SELECT * FROM tags''')
+    results = be.cur.fetchall()
+    assert len(results) == 1
+    assert results[0][1] == 'baz'
+
+
 def test_get_images_by_tag():
     tags_to_add = 'fee fi fo fum'
     be = Backend(':memory:')
