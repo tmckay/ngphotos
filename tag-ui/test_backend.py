@@ -74,3 +74,12 @@ def test_get_images_by_tag():
 
     images = be.get_images_by_tag('fee')
     assert images[0][1] == '/Users/foo/images/bar.jpg'
+
+
+def test_reset():
+    be = Backend(':memory:')
+    be.create_table()
+    be.add_image('/Users/foo/images/bar.jpg', '123abc')
+    be.cur.execute('''SELECT * FROM images''')
+    be.reset()
+    assert len(be.cur.fetchall()) == 0
