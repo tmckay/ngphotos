@@ -79,9 +79,12 @@ class Backend:
             self.image_id = self.cur.lastrowid
             self.con.commit()
 
-    def update_tags(self, tags):
+    def update_tags(self, tags, image_id=None):
+        """If image_id is not provided, we default to adding tags to last added image."""
 
         def insert_tag(tag):
+            nonlocal image_id
+
             print(f'calling insert tag {tag}')
 
             self.cur.execute(f'''SELECT * FROM {TAG_TABLE} WHERE tag_value = '{tag}' ''')
@@ -94,7 +97,12 @@ class Backend:
             else:
                 self.cur.execute(f'''INSERT INTO {TAG_TABLE} VALUES (null, '{tag}')''')
                 tag_id = self.cur.lastrowid
-                self.cur.execute(f'''INSERT INTO {IMAGE_TAGS_TABLE} VALUES ('{tag_id}', '{self.image_id}')''')
+
+                # Use last inserted image if image_id is not passed as argument
+                if not image_id:
+                    image_id = self.image_id
+
+                self.cur.execute(f'''INSERT INTO {IMAGE_TAGS_TABLE} VALUES ('{tag_id}', '{image_id}')''')
                 self.con.commit()
 
         for tag in Tags.parse(tags):
