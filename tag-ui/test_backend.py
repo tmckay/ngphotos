@@ -1,4 +1,4 @@
-from backend import Backend, Tags
+from backend import Backend, Tags, Table
 
 
 def test_parse_tags():
@@ -21,7 +21,7 @@ def test_add_image():
     be = Backend(':memory:')
     be.create_table()
     be.add_image('/Users/foo/images/bar.jpg', '123abc')
-    be.cur.execute('''SELECT count(*) FROM images''')
+    be.cur.execute(f'''SELECT count(*) FROM {Table.IMAGE.value}''')
     assert be.cur.fetchall()[0][0] == 1
 
 def test_add_image_with_tags():
@@ -31,14 +31,14 @@ def test_add_image_with_tags():
     be.add_image('/Users/foo/images/bar.jpg', '123abc')
     be.update_tags(tags_to_add)
 
-    be.cur.execute('''SELECT count(*) FROM tags''')
+    be.cur.execute(f'''SELECT count(*) FROM {Table.TAG.value}''')
     assert be.cur.fetchall()[0][0] == 4
 
-    be.cur.execute('''SELECT * FROM tags''')
+    be.cur.execute(f'''SELECT * FROM {Table.TAG.value}''')
     tags_added = [row[1] for row in be.cur.fetchall()]
     assert sorted(tags_added) == ['fee', 'fi', 'fo', 'fum'] 
 
-    be.cur.execute('''SELECT * FROM image_tags''')
+    be.cur.execute(f'''SELECT * FROM {Table.IMAGE_TAGS.value}''')
     rows = be.cur.fetchall()
     assert len(rows) == 4
     for row in rows:
@@ -54,7 +54,7 @@ def test_add_images_with_existing_tags():
     be.add_image('/Users/foo/images/buzz.jpg', 'abc123')
     be.update_tags('baz')
 
-    be.cur.execute('''SELECT * FROM tags''')
+    be.cur.execute(f'''SELECT * FROM {Table.TAG.value}''')
     results = be.cur.fetchall()
     assert len(results) == 1
     assert results[0][1] == 'baz'
@@ -80,6 +80,6 @@ def test_reset():
     be = Backend(':memory:')
     be.create_table()
     be.add_image('/Users/foo/images/bar.jpg', '123abc')
-    be.cur.execute('''SELECT * FROM images''')
+    be.cur.execute(f'''SELECT * FROM {Table.IMAGE.value}''')
     be.reset()
     assert len(be.cur.fetchall()) == 0
