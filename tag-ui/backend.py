@@ -82,6 +82,10 @@ class Backend:
             self.image_id = self.cur.lastrowid
             self.con.commit()
 
+    def delete_image(self, image_id):
+        self.cur.execute(f'''DELETE FROM {Table.IMAGE.value} WHERE image_id = '{image_id}' ''')
+        self.con.commit()
+
     def update_tags(self, tags, image_id=None):
         """If image_id is not provided, we default to adding tags to last added image."""
 
