@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from collections import deque
 from enum import Enum, unique
 from multiprocessing import Process, Queue
@@ -35,6 +36,35 @@ class Tags:
             parsed_tags.append(tag) 
 
         return parsed_tags
+
+
+class CRUDObject(ABC):
+
+    @property
+    @abstractmethod
+    def insert(self):
+        pass
+
+    @property
+    @abstractmethod
+    def update(self):
+        pass
+
+    @property
+    @abstractmethod
+    def delete(self):
+        pass
+
+
+class Image(CRUDObject):
+    
+    def insert(self):
+        pass
+
+class Tag(CRUDObject):
+
+    def insert(self):
+        pass
 
 
 class Backend:
