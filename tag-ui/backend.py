@@ -59,7 +59,13 @@ class CRUDObject(ABC):
 class Image(CRUDObject):
     
     def insert(self):
-        pass
+        query = f'''INSERT INTO {Table.IMAGE.value} VALUES (null, '{path}', '{md5}')'''
+
+    def update(self):
+        query = f''' '''
+
+    def delete(self):
+        query = f'''DELETE FROM {Table.IMAGE.value} WHERE image_id = '{image_id}' '''
 
 class Tag(CRUDObject):
 
